@@ -1,6 +1,7 @@
 (function() {
+  define(['moment'], function (moment) {
+  'use strict'; 	
   angular.module("mightyDatepicker", ["pasvaz.bindonce"]);
-  angular.module("mightyDatepicker", [moment]);
 
   angular.module("mightyDatepicker", []).directive("mightyDatepicker", [
     "$compile", function($compile) {
@@ -286,5 +287,5 @@
       };
     }
   ]);
-
+  });
 }).call(this);
