@@ -6,7 +6,7 @@
   angular.module("mightyDatepicker", []).directive("mightyDatepicker", [
     "$compile", function($compile) {
       var options, pickerTemplate;
-      pickerTemplate = "<div class=\"mighty-picker__wrapper\">\n  <button type=\"button\" class=\"mighty-picker__prev-month\"\n    ng-click=\"moveMonth(-1, $event)\">\n    <<\n  </button>\n  <div class=\"mighty-picker__month\"\n    ng-repeat=\"month in months track by $index\">\n    <div class=\"mighty-picker__month-name\" ng-bind=\"month.name\"></div>\n    <table class=\"mighty-picker-calendar\">\n      <tr class=\"mighty-picker-calendar__days\">\n        <th ng-repeat=\"day in ::month.weeks[1]\"\n          class=\"mighty-picker-calendar__weekday\">\n          {{:: day.date.format('dd') }}\n        </th>\n      </tr>\n      <tr ng-repeat=\"week in month.weeks\">\n        <td\n            ng-class='{\n              \"mighty-picker-calendar__day\": day,\n              \"mighty-picker-calendar__day--selected\": day.selected,\n              \"mighty-picker-calendar__day--disabled\": day.disabled,\n              \"mighty-picker-calendar__day--in-range\": day.inRange,\n              \"mighty-picker-calendar__day--marked\": day.marker\n            }'\n            ng-repeat=\"day in ::week track by $index\" ng-click=\"select(day, $event)\">\n            <div class=\"mighty-picker-calendar__day-wrapper\">\n              {{:: day.date.date() }}\n            </div>\n            <div class=\"mighty-picker-calendar__day-marker-wrapper\">\n              <div class=\"mighty-picker-calendar__day-marker\"\n                ng-if=\"day.marker\"\n                ng-bind-template=\"\">\n              </div>\n            </div>\n        </td>\n      </tr>\n    </table>\n  </div>\n  <button type=\"button\" class=\"mighty-picker__next-month\"\n    ng-click=\"moveMonth(1, $event)\">\n    >>\n  </button>\n</div>";
+      pickerTemplate = "<div class=\"mighty-picker__wrapper\">\n  <button type=\"button\" class=\"mighty-picker__prev-month\"\n    ng-click=\"moveMonth(-1, $event)\">\n    <<\n  </button>\n  <div class=\"mighty-picker__month\"\n    ng-repeat=\"month in months track by $index\">\n    <div class=\"mighty-picker__month-name\" ng-bind=\"month.name\"></div>\n    <table class=\"mighty-picker-calendar\">\n      <tr class=\"mighty-picker-calendar__days\">\n        <th ng-repeat=\"day in ::month.weeks[1]\"\n          class=\"mighty-picker-calendar__weekday\">\n          {{:: day.date.format('dd') }}\n        </th>\n      </tr>\n      <tr ng-repeat=\"week in month.weeks\">\n        <td\n            ng-class='{\n              \"mighty-picker-calendar__day\": day,\n              \"mighty-picker-calendar__day--selected\": day.selected,\n              \"mighty-picker-calendar__day--disabled\": day.disabled,\n              \"mighty-picker-calendar__day--in-range\": day.inRange,\n              \"mighty-picker-calendar__day--marked\": day.marker\n            }'\n            ng-repeat=\"day in ::week track by $index\" ng-click=\"select(day, $event)\">\n            <div class=\"mighty-picker-calendar__day-wrapper\">\n              {{:: day.date.date() }}\n            </div>\n            <div class=\"mighty-picker-calendar__day-marker-wrapper\">\n              <div class=\"mighty-picker-calendar__day-marker\"\n                ng-if=\"day.marker\"\n                ng-bind-template=\"\">\n              </div>\n            </div>\n        </td>\n      </tr>\n    </table>\n  </div>\n  <button type=\"button\" class=\"mighty-picker__next-month\"\n  ng-show=\"showArrow()\"  ng-click=\"moveMonth(1, $event)\">\n    >>\n  </button>\n</div>";
       options = {
         mode: "simple",
         months: 1,
@@ -26,6 +26,7 @@
           markers: '=',
           after: '=',
           before: '=',
+          rangeDateTo:'=',
           rangeFrom: '=',
           rangeTo: '='
         },
@@ -92,9 +93,9 @@
           _isInRange = function(day) {
             if ($scope.options.rangeMode) {
               if ($scope.options.rangeMode === "from") {
-                return moment.range($scope.model, $scope.before).contains(day) || day.isSame($scope.before, 'day');
+                return moment.range($scope.model, $scope.rangeDateTo).contains(day) || day.isSame($scope.rangeDateTo, 'day');
               } else {
-                return moment.range($scope.after, $scope.model).contains(day) || day.isSame($scope.after, 'day');
+                return moment.range($scope.rangeDateTo, $scope.model).contains(day) || day.isSame($scope.rangeDateTo, 'day');
               }
             } else {
               return false;
@@ -117,7 +118,7 @@
                 date: day,
                 selected: _isSelected(day) && withinMonth,
                 inRange: _isInRange(day),
-                disabled: !(withinLimits && withinMonth && filter),
+                disabled: !(withinLimits && filter),
                 marker: withinMonth ? _getMarker(day) : void 0
               };
             });
@@ -209,6 +210,16 @@
             }
             $scope.options.start.add(step, 'month');
             _prepare();
+          }; 
+          $scope.showArrow = function() {
+            var startDate = moment().format("MMMM YYYY");
+            var currentDate = $scope.months[0].name;
+            if(startDate !== currentDate){
+              return true;
+            }
+            else{
+              return false;
+            }
           };
           $scope.select = function(day, $event) {
             var ix;
@@ -263,7 +274,7 @@
                 }
               });
           }
-          $scope.$watch('before', function(newVal, oldVal) {
+          $scope.$watch('[before,rangeDateTo]', function(newVal, oldVal) {
             if (newVal) {
               if (!moment.isMoment(newVal)) {
                 newVal = moment(newVal);
@@ -273,7 +284,7 @@
               }
             }
           });
-          return $scope.$watch('after', function(newVal, oldVal) {
+          return $scope.$watch('[after,rangeDateTo]', function(newVal, oldVal) {
             if (newVal) {
               if (!moment.isMoment(newVal)) {
                 newVal = moment(newVal);
